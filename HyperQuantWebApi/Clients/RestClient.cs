@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-using System.Text.Json;
-using HyperQuantWebApi.Models;
+﻿using System.Text.Json;
 
 namespace HyperQuantWebApi.Clients
 {
