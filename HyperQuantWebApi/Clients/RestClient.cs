@@ -14,11 +14,41 @@ namespace HyperQuantWebApi.Clients
             };
         }
 
+        public async Task<List<List<JsonElement>>> GetJsonTradesAsync(string pair, int count)
+        {
+            var url = $"trades/t{pair.ToUpper()}/hist?limit={count}";
+
+            return await GetAsync(url);
+        }
+
+        public async Task<List<List<JsonElement>>> GetJsonCandlesAsync(string pair, string period, DateTimeOffset? from, DateTimeOffset? to = null, long? count = 0)
+        {
+            var url = $"candles/trade%3A{period}%3At{pair.ToUpper()}/hist?";
+
+            if (from.HasValue)
+            {
+                url += $"&start={from.Value.ToUnixTimeMilliseconds()}";
+            }
+
+            if (to.HasValue)
+            {
+                url += $"&end={to.Value.ToUnixTimeMilliseconds()}";
+            }
+
+            if (count.HasValue)
+            {
+                url += $"&limit={count}";
+            }
+
+            return await GetAsync(url);
+        }
+
+        #region for tests swagger
         public async Task<IEnumerable<Trade>> GetTradesAsync(string pair, int maxCount)
         {
-            var uri = $"trades/t{pair.ToUpper()}/hist?limit={maxCount}";
+            var url = $"trades/t{pair.ToUpper()}/hist?limit={maxCount}";
 
-            var jsonElements = await GetAsync(uri);
+            var jsonElements = await GetAsync(url);
 
             return jsonElements.Select(trade => new Trade
             {
@@ -35,24 +65,24 @@ namespace HyperQuantWebApi.Clients
         {
             var availableValue = ConvertSecToAvailableValue(periodInSec);
 
-            var uri = $"candles/trade%3A{availableValue}%3At{pair.ToUpper()}/hist?";
+            var url = $"candles/trade%3A{availableValue}%3At{pair.ToUpper()}/hist?";
 
             if (from.HasValue)
             {
-                uri += $"&start={from.Value.ToUnixTimeMilliseconds()}";
+                url += $"&start={from.Value.ToUnixTimeMilliseconds()}";
             }
 
             if (to.HasValue)
             {
-                uri += $"&end={to.Value.ToUnixTimeMilliseconds()}";
+                url += $"&end={to.Value.ToUnixTimeMilliseconds()}";
             }
 
             if (count.HasValue)
             {
-                uri += $"&limit={count}";
+                url += $"&limit={count}";
             }
 
-            var jsonElements = await GetAsync(uri);
+            var jsonElements = await GetAsync(url);
 
             return jsonElements.Select(candle => new Candle
             {
@@ -66,10 +96,11 @@ namespace HyperQuantWebApi.Clients
                 OpenTime = DateTimeOffset.FromUnixTimeMilliseconds(candle[0].GetInt64()),
             });
         }
+        #endregion
 
-        private async Task<List<List<JsonElement>>> GetAsync(string uri)
+        private async Task<List<List<JsonElement>>> GetAsync(string url)
         {
-            var response = await _httpClient.GetAsync(uri);
+            var response = await _httpClient.GetAsync(url);
 
             response.EnsureSuccessStatusCode();
 
